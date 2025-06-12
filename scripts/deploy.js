@@ -7,8 +7,12 @@ async function main() {
   const priceConsumer = await PriceConsumer.deploy();
 
   // 不需要调用 priceConsumer.deployed();
-
   console.log("PriceConsumer deployed to:", priceConsumer.target);
+
+  // // 监听事件
+  // priceConsumer.on("PriceUpdated", (price) => {
+  //   console.log("Price updated:", price.toString());
+  // });
 }
 
 main().catch((error) => {
