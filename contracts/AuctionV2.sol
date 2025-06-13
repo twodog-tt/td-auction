@@ -37,7 +37,7 @@ contract AuctionV2 is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         uint256 _biddingTime,
         address _paymentToken
     ) public reinitializer(2) {
-        __Ownable_init(msg.sender);
+        __Ownable_init();
         __UUPSUpgradeable_init();
 
         seller = _seller;
