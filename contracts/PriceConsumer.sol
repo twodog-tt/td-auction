@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
 // import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
@@ -36,7 +36,7 @@ contract PriceConsumer {
     /**
      * 返回最新价格，带有 8 位小数精度（如 176500000000 => $1765.00000000）
      */
-    function getLatestPrice() public returns (int256) {
+    function getLatestPrice() public view returns (int256) {
         (
             /*uint80 roundID*/,
             int256 price,

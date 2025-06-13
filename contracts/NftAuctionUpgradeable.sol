@@ -1,28 +1,46 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract NftAuctionUpgradeable is Initializable {
+    // Auction 结构体内的字段排列没有充分利用 Solidity 的内存对齐机制（slot packing），导致 gas 成本增加。
+    // 结构体定义
+    // 这里的字段顺序可以优化以减少存储空间和提高效率
+    // 例如，将 address 类型的字段放在一起，uint256 类型的字段放在一起
+    // 以减少存储时的填充字节
+    // struct Auction {
+    //     // 卖家
+    //     address seller;
+    //     // 最高出价者
+    //     address highestBidder;
+    //     // NFT合约地址
+    //     address nftContract;
+    //     // 拍卖持续时间
+    //     uint256 duration;
+    //     // 起始价格
+    //     uint256 startPrice;
+    //     // 开始时间
+    //     uint256 startTime;
+    //     // 最高出价
+    //     uint256 highestBid;
+    //     // NFT的ID
+    //     uint256 nftId;
+    //     // 是否结束
+    //     bool ended;
+    // }
     struct Auction {
-        // 卖家
-        address seller;
-        // 拍卖持续时间
-        uint256 duration;
-        // 起始价格
-        uint256 startPrice;
-        // 开始时间
-        uint256 startTime;
-        // 是否结束
+        // 是否结束（1 byte）
         bool ended;
-        // 最高出价者
+        // 卖家、最高出价者、NFT合约地址（3 个 address 共 60 bytes）
+        address seller;
         address highestBidder;
-        // 最高出价 
-        uint256 highestBid;
-
-        // NFT合约地址
         address nftContract;
-        // NFT的ID
+        // 以下字段为 uint256，占用完整 slot（每个 32 bytes）
+        uint256 duration;
+        uint256 startPrice;
+        uint256 startTime;
+        uint256 highestBid;
         uint256 nftId;
     }
 
@@ -33,7 +51,7 @@ contract NftAuctionUpgradeable is Initializable {
     // 管理员地址
     address public admin;
 
-    function initialize() initializer public {
+    function initialize() public initializer {
         admin = msg.sender; // 部署合约的地址为管理员
     }
 
@@ -42,14 +60,17 @@ contract NftAuctionUpgradeable is Initializable {
         uint256 _duration,
         uint256 _startPrice,
         address _nftContract,
-        uint256 _nftId 
+        uint256 _nftId
     ) public {
         // 只有管理员可以创建拍卖
         require(msg.sender == admin, "Only admin can create auctions");
         // 验证输入参数
         require(_duration > 0, "Duration must be greater than 0");
         require(_startPrice > 0, "Start price must be greater than 0");
-        require(_nftContract != address(0), "NFT contract address cannot be zero");
+        require(
+            _nftContract != address(0),
+            "NFT contract address cannot be zero"
+        );
         auctions[nextAuctionId] = Auction({
             seller: msg.sender,
             duration: _duration,
@@ -64,16 +85,23 @@ contract NftAuctionUpgradeable is Initializable {
 
         nextAuctionId++;
     }
-    
+
     // 买家参与买单
     function placeBid(uint256 _auctionId) public payable {
         Auction storage auction = auctions[_auctionId];
         // 验证拍卖是否存在
         require(_auctionId < nextAuctionId, "Auction does not exist");
         // 验证拍卖是否结束
-        require(!auction.ended && block.timestamp > auction.startTime + auction.duration, "Auction has ended");
+        require(
+            !auction.ended &&
+                block.timestamp > auction.startTime + auction.duration,
+            "Auction has ended"
+        );
         // 验证出价是否高于当前最高出价
-        require(msg.value > auction.highestBid && msg.value >= auction.startPrice, "Bid must be higher than current highest bid and start price");
+        require(
+            msg.value > auction.highestBid && msg.value >= auction.startPrice,
+            "Bid must be higher than current highest bid and start price"
+        );
 
         // 如果有出价者，退还之前的最高出价
         if (auction.highestBidder != address(0)) {
