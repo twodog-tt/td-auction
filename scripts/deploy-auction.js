@@ -1,18 +1,11 @@
 const { ethers, upgrades } = require("hardhat");
 
-async function main() {
-    const Auction = await ethers.getContractFactory("Auction");
-    const auction = await upgrades.deployProxy(Auction, [
-        "0xSellerAddressHere",        // seller
-        "0xNFTContractAddressHere",   // nftAddress
-        1,                           // tokenId
-        ethers.utils.parseEther("1"), // startingPrice = 1 ETH
-        86400,                       // biddingTime = 1 天
-        ethers.constants.AddressZero // paymentToken = ETH
-    ], { initializer: "initialize" });
+async function upgrade() {
+    const AuctionV2 = await ethers.getContractFactory("AuctionV2");
+    const proxyAddress = "已部署的 Auction 代理地址";
 
-    await auction.deployed();
-    console.log("Auction proxy deployed to:", auction.address);
+    const auctionV2 = await upgrades.upgradeProxy(proxyAddress, AuctionV2);
+    console.log("Upgrade done, new implementation at:", auctionV2.address);
 }
 
-main().catch(console.error);
+upgrade();
